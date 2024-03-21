@@ -1,17 +1,115 @@
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 
 public class Client {
     private static Socket socket;
     private static PrintWriter out;
-    private BufferedReader in;
+    private static BufferedReader in;
     private String name;
     private String surname;
     private String email;
     private String password;
     private static String opz;
+    private static String opzione;
+    private static ArrayList<String> codici = new ArrayList<>();
+    private static ArrayList<Integer> quantita = new ArrayList<>();
+
+    // -----------------------------------------------------------------------------------------------------------------
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Scanner input = new Scanner(System.in);
+        Client client = new Client();
+        boolean trovato = false;
+        int posizione = 0;
+        client.connectToServer();
+        client.createReaderWriter();
+        client.recognition();
+        if(!opz.equals("1")) {  //if it's different from one
+            client.sendMsg();
+        }
+        while(true){
+            System.out.print(""" 
+                                Menù abbigliamento, inserisci il numero della categoria che desideri:
+                                1-Shopping
+                                2-Carrello
+                                3-Exit
+                                Opzione Numero: 
+                                """);
+            client.writeMessage(input);
+            if(opzione.equals("1")) {
+                client.readingStorage();    //serve per leggere il magazzino
+                /*blocco per 1sec questa stampa perchè la stampa del magazzino è più lenta
+                - InterruptedException per gestire eccezioni durante Thread.sleep*/
+                Thread.sleep(10000);
+                System.out.println(codici);
+                System.out.println(quantita);
+                System.out.println("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci un altro carattere\nRisposta: ");
+                String codiceArticolo = input.nextLine();
+                for (String codice : codici) {
+                    if (codice.equals(codiceArticolo)) {
+                        posizione = codici.indexOf(codiceArticolo);
+                        trovato = true;
+                        break;
+                    }
+                }
+                if (trovato) {
+                    while (true) {
+                        System.out.println("Quanti ne vuoi di questo articolo? ");
+                        int numberOfArticle;
+                        String numFormat = input.next();
+                        try{
+                            numberOfArticle = Integer.parseInt(numFormat);
+                        }catch(NumberFormatException e){
+                            System.out.println("ERRORE: Inserire un numero");
+                            continue;
+                        }
+                        if (numberOfArticle > 0) {
+                            if (numberOfArticle <= quantita.get(posizione)) {
+                                out.println("v");   //per far capire al server che è stato inserito un codice e num. art. corretto
+                                out.println(codiceArticolo);
+                                int num = quantita.get(posizione) - numberOfArticle;
+                                out.println(num);
+                                input.nextLine();
+                                break;
+                            } else {
+                                System.out.println("ERRORE: Numero articoli insufficenti");
+                            }
+                        } else {
+                            System.out.println("ERRORE: Inserire un numero maggiore di zero");
+                        }
+                    }
+                } else {
+                    out.println("x");
+                }
+            }else{
+            }
+        }
+        /*Gestire da client l'inserimento del codice dell'articolo e la quantità e poi inviarlo al server
+        - Il server poi deve vedere se il codice inserito e la quantità richiesta sono disponibili.
+        - Se si li aggiunge al carrello, in caso negativo ritorna al client un errore e viene richiesto l'inserimento. */
+    }
+    // -----------------------------------------------------------------------------------------------------------------
+    public void connectToServer() {
+        try {
+            socket = new Socket("localhost", 4444);
+        } catch (IOException e) {
+            System.err.println("Errore è: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    public void createReaderWriter() {
+        try {
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
 
     public void recognition() throws IOException {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -104,22 +202,6 @@ public class Client {
         }
     }
 
-    public void connectToServer() {
-        try {
-            socket = new Socket("localhost", 4444);
-        } catch (IOException e) {
-            System.err.println("Errore è: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-    public void createReaderWriter() {
-        try {
-            out = new PrintWriter(socket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-        }
-    }
     public void sendMsg() {
         out.println(opz);
         out.println(name);
@@ -127,18 +209,30 @@ public class Client {
         out.println(email);
         out.println(password);
     }
-    private void serverResponse() {
+    private void readingStorage() {
         //quando inzia il metodo viene avviato un thread, vengono letti tutti i messaggi che invia il server appena non invia piu nulla brekka esce dal ciclo e quando ternima il metodo il thread viene distrutto
         new Thread(() -> {
             String response;
+            String[] words;
+            codici.clear();
+            quantita.clear();
             while (true) {
                 try {
-                    if ((response = in.readLine()) == null) break;
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                // Leggi la risposta del server
+                try {
+                    response = in.readLine();
                 } catch (IOException e) {
                     System.out.println("ERRORE in lettura");
                     throw new RuntimeException(e);
                 }
-                // Leggi la risposta del server
+                if (response.equals("end")) break;
+                words = response.split("\\s+");
+                codici.add(words[3]);
+                quantita.add(Integer.parseInt(words[4]));
                 System.out.println(response); //"Risposta dal server: " +
             }
         }).start();
@@ -147,10 +241,10 @@ public class Client {
         // Invia un messaggio al server
         while (true) {
             try {
-                String opzione = input.nextLine();
-                 if (opzione.equals("3")){
-                     System.exit(0);
-                 }
+                opzione = input.nextLine();
+                if (opzione.equals("3")){
+                    System.exit(0);
+                }
                 if (opzione.equals("1") || opzione.equals("2")) {
                     out.println(opzione);
                     break;
@@ -164,30 +258,4 @@ public class Client {
             }
         }
     }
-    // -----------------------------------------------------------------------------------------------------------------
-    public static void main(String[] args) throws IOException, InterruptedException {
-        Scanner input = new Scanner(System.in);
-        Client client = new Client();
-        client.connectToServer();
-        client.createReaderWriter();
-        client.recognition();
-        if(!opz.equals("1")) {  //if it's different from one
-            client.sendMsg();
-        }
-        client.serverResponse();    //serve per leggere il menù
-        client.writeMessage(input);
-        client.serverResponse();    //serve per leggere il magazzino
-        /*blocco per 1sec perchè la stampa del magazzino è troppo lenta e mi esegue subito la stampa
-        - InterruptedException per gestire eccezioni durante Thread.sleep*/
-        Thread.sleep(1000);
-        System.out.println("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci '!'\nRisposta: ");
-        String codiceArticolo = input.nextLine();
-        //se viene inserito "!" mettere un ciclo che continua a leggere e rinviare
-        out.println(codiceArticolo);
-        //se si inserisce '!' per non inserire nulla nel carrello devo mette1re in loop nel server che se legge ! mi richiede il menù
-        /*Gestire da client l'inserimento del codice dell'articolo e la quantità e poi inviarlo al server
-        - Il server poi deve vedere se il codice inserito e la quantità richiesta sono disponibili.
-        - Se si li aggiunge al carrello, in caso negativo ritorna al client un errore e viene richiesto l'inserimento. */
-    }
-    // -----------------------------------------------------------------------------------------------------------------
 }

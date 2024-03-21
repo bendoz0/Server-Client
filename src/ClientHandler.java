@@ -1,9 +1,11 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ClientHandler implements Runnable {
     private static ArrayList<ClientHandler> usersList = new ArrayList<>();
+    private static HashMap<String, ArrayList<Product>> usersCart = new HashMap<>();
     private static ArrayList<Product> data = new ArrayList<>();
     private Socket clientSocket;
     private BufferedReader bufferedReader;
@@ -12,6 +14,7 @@ public class ClientHandler implements Runnable {
     private String surname;
     private String email;
     private String password;
+    private static String emailDiAccesso;
 
     public ClientHandler(Socket socket) {
         try{
@@ -44,22 +47,20 @@ public class ClientHandler implements Runnable {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             UserRegister();
+            String trovato = "";
             while(true) {
-                out.println("Menù abbigliamento, inserisci il numero della categoria che desideri:");
-                out.println("1-Shopping");
-                out.println("2-Carrello");
-                out.println("3-Exit");
-                out.println("Opzione Numero: ");
-
-                String message;
-                while ((message = in.readLine()) != null) {
-                    System.out.println("Messaggio dal client: " + message);
-                    // Invia una risposta di conferma al client
-                    out.println("Ricevuto");
+                String message = in.readLine();
+                System.out.println("Messaggio dal client: " + message);
+                while(true) {
                     if (message.equals("1")) {
                         shoppingMenu();
-                        if (in.readLine().equals("!")) {
+                        trovato = in.readLine();
+                        if (trovato.equals("x")) {
                             break;
+                        }else{
+                            String code = in.readLine();
+                            int quantity = Integer.parseInt(in.readLine());
+                            //findArticle(code, quantity);
                         }
                     } else {
                         //carrello
@@ -91,6 +92,7 @@ public class ClientHandler implements Runnable {
                     for (ClientHandler user : usersList) {
                         if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
                             correct = true;
+                            emailDiAccesso = emailVerify;
                             out.println("accesso");
                             break;
                         }
@@ -107,10 +109,30 @@ public class ClientHandler implements Runnable {
                 String surname = in.readLine();
                 String email = in.readLine();
                 String password = in.readLine();
+                emailDiAccesso = email;
                 ClientHandler newUser = new ClientHandler(name, surname, email, password);
                 usersList.add(newUser);
-                out.println("Registrazione avvenuta con successo");
+                System.out.println(usersList);
+                fillMap(emailDiAccesso);
+                //out.println("Registrazione avvenuta con successo");
                 break;
+        }
+    }
+    public static void fillMap (String mail){
+        usersCart.putIfAbsent(mail, new ArrayList<Product>());
+    }
+    public static void findArticle(String itemCode, int numberOfArticle){
+        for(Product p : data){
+            if (p.getCode().equals(itemCode)){
+                ClientHandler.cartManagement(p, numberOfArticle);
+                break;
+            }
+        }
+    }
+    public static void cartManagement(Product p, int numberOfArticle){
+        p.setQuantity(numberOfArticle);
+        if (usersCart.containsKey(emailDiAccesso)) {
+            usersCart.get(emailDiAccesso).add(p);
         }
     }
     public void shoppingMenu() throws IOException {
@@ -130,13 +152,11 @@ public class ClientHandler implements Runnable {
                 product = new Product(category, brand, price, code, quantity);
                 data.add(product);
                 for (String word : words) {
-                    //System.out.print(padString(word, 20));
                     out.print(padString(word)); // Separate words with spaces
-
                 }
-                //System.out.println();
                 out.println();  // Move to the next line
             }
+            out.println("end");
             reader.close();
         } catch (IOException e) {
             System.err.println("Error reading file: " + e.getMessage());
@@ -144,11 +164,10 @@ public class ClientHandler implements Runnable {
     }
     private static String padString(String s) {
         int spacesToAdd = 20 - s.length();  //Calculation to add spaces
-        StringBuilder paddedString = new StringBuilder(s);
         for (int i = 0; i < spacesToAdd; i++) {
-            paddedString.append(" ");
+            s += " ";
         }
-        return paddedString.toString();
+        return s;
     }
     public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
         try{
