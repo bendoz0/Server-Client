@@ -46,8 +46,6 @@ public class Client {
                 /*blocco per 1sec questa stampa perchè la stampa del magazzino è più lenta
                 - InterruptedException per gestire eccezioni durante Thread.sleep*/
                 Thread.sleep(10000);
-                System.out.println(codici);
-                System.out.println(quantita);
                 System.out.println("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci un altro carattere\nRisposta: ");
                 String codiceArticolo = input.nextLine();
                 for (String codice : codici) {
@@ -72,9 +70,9 @@ public class Client {
                             if (numberOfArticle <= quantita.get(posizione)) {
                                 out.println("v");   //per far capire al server che è stato inserito un codice e num. art. corretto
                                 out.println(codiceArticolo);
-                                int num = quantita.get(posizione) - numberOfArticle;
-                                out.println(num);
+                                out.println(numberOfArticle);
                                 input.nextLine();
+                                trovato=false;
                                 break;
                             } else {
                                 System.out.println("ERRORE: Numero articoli insufficenti");

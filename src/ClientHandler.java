@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class ClientHandler implements Runnable {
     private static ArrayList<ClientHandler> usersList = new ArrayList<>();
@@ -51,20 +52,18 @@ public class ClientHandler implements Runnable {
             while(true) {
                 String message = in.readLine();
                 System.out.println("Messaggio dal client: " + message);
-                while(true) {
-                    if (message.equals("1")) {
-                        shoppingMenu();
-                        trovato = in.readLine();
-                        if (trovato.equals("x")) {
-                            break;
-                        }else{
-                            String code = in.readLine();
-                            int quantity = Integer.parseInt(in.readLine());
-                            //findArticle(code, quantity);
-                        }
-                    } else {
-                        //carrello
+                if (message.equals("1")) {
+                    shoppingMenu();
+                    trovato = in.readLine();
+                    if (trovato.equals("x")) {
+                    }else{
+                        String code = in.readLine();
+                        int quantity = Integer.parseInt(in.readLine());
+                        findArticle(code, quantity);
+                        letturaRiscrittura(code, quantity);
                     }
+                } else {
+                    //carrello
                 }
             }
         } catch (IOException e) {
@@ -169,6 +168,40 @@ public class ClientHandler implements Runnable {
         }
         return s;
     }
+    public static void letturaRiscrittura(String itemCode, int numberOfArticle){
+        try {
+            // Legge il file e memorizza le lines in una lista
+            List<String> lines = new ArrayList<>();
+            BufferedReader reader = new BufferedReader(new FileReader("src/Magazzino.txt"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                lines.add(line);
+            }
+            reader.close();
+            // Trova l'indice della line
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).contains(itemCode)) {
+                    // Estrai il valore quantita dalla line
+                    String[] value = lines.get(i).split("/");
+                    value[4] = String.valueOf(Integer.parseInt(value[4]) - numberOfArticle);
+
+                    // Aggiorna la line con la nuova quantita
+                    lines.set(i, String.join("/", value));
+                    break;
+                }
+            }
+            // Riscrivi il file con la modifica
+            BufferedWriter writer = new BufferedWriter(new FileWriter("src/Magazzino.txt"));
+            for (String changedLine : lines) {
+                writer.write(changedLine);
+                writer.newLine();
+            }
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
         try{
             if(bufferedWriter != null){
