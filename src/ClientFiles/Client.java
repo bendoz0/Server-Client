@@ -1,3 +1,4 @@
+package ClientFiles;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -5,7 +6,6 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
-
 
 public class Client {
     private static Socket socket;
@@ -16,23 +16,24 @@ public class Client {
     private String email;
     private String password;
     private static String opz;
-    private static String opzione;
+    private static String option;
     private static String el;
-    private static ArrayList<String> codici = new ArrayList<>();
-    private static ArrayList<Integer> quantita = new ArrayList<>();
+    private static ArrayList<String> codes = new ArrayList<>();
+    private static ArrayList<Integer> disponibility = new ArrayList<>();
 
     // -----------------------------------------------------------------------------------------------------------------
     public static void main(String[] args){
         Scanner input = new Scanner(System.in);
         Client client = new Client();
-        boolean trovato = false;
-        int posizione = 0;
-        client.connectToServer();
-        client.createReaderWriter();
+        boolean find = false;
+        int posiction = 0;
+
+        client.connectToServer();   //create a connection with the server
+        client.createReaderWriter();    //creating the variable to read and write
         try {
-            client.recognition();
-            if(!opz.equals("1")) {  //if it's different from one
-                out.println(opz);
+            client.recognition();   //function of start phases: access or registration
+            if(opz.equals("2")) {
+                out.println(opz);   //send the option and personal data to register the user
                 client.sendMsg();
             }
             while(true){
@@ -44,7 +45,7 @@ public class Client {
                                     Opzione Numero:
                                     """);
                 client.writeMessage(input);
-                if(opzione.equals("1")) {
+                if(option.equals("1")) {
                     client.readingStorage();    //serve per leggere il magazzino
                     /*blocco per 10sec questa stampa perchè la stampa del magazzino è più lenta
                     - InterruptedException per gestire eccezioni durante Thread.sleep
@@ -55,16 +56,16 @@ public class Client {
                         throw new RuntimeException(e);
                     }
                     System.out.print("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci un altro carattere\nRisposta: ");
-                    String codiceArticolo = input.nextLine();
-                    for (String codice : codici) {
-                        if (codice.equals(codiceArticolo)) {
-                            posizione = codici.indexOf(codiceArticolo);
-                            trovato = true;
+                    String codeArticle = input.nextLine();
+                    for (String code : codes) {
+                        if (code.equals(codeArticle)) {
+                            posiction = codes.indexOf(codeArticle);
+                            find = true;
                             break;
                         }
                     }
-                    if (trovato) {
-                        trovato = setNumberArticle(posizione, codiceArticolo);
+                    if (find) {
+                        find = setNumberArticle(posiction, codeArticle);
                     } else {
                         out.println("x");
                     }
@@ -99,8 +100,7 @@ public class Client {
         try {
             socket = new Socket("localhost", 4444);
         } catch (IOException e) {
-            System.err.println("Errore è: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("SERVER OFFLINE");
         }
     }
     private void createReaderWriter() {
@@ -108,7 +108,7 @@ public class Client {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            System.err.println("PROBLEM OF CONNECTION");
         }
     }
 
@@ -219,8 +219,8 @@ public class Client {
         new Thread(() -> {
             String response;
             String[] words;
-            codici.clear();
-            quantita.clear();
+            codes.clear();
+            disponibility.clear();
             while (true) {
                 try {
                     Thread.sleep(500);
@@ -236,29 +236,29 @@ public class Client {
                 }
                 if (response.equals("end")) break;
                 words = response.split("\\s+");
-                codici.add(words[3]);
-                quantita.add(Integer.parseInt(words[4]));
+                codes.add(words[3]);
+                disponibility.add(Integer.parseInt(words[4]));
                 System.out.println(response); //"Risposta dal server: " +
             }
         }).start();
     }
     private void writeMessage(Scanner input){
-        // Invia un messaggio al server
+        // send a message to server
         while (true) {
             try {
-                opzione = input.nextLine();
-                if (opzione.equals("3")){
+                option = input.nextLine();
+                if (option.equals("3")){
                     System.exit(0);
                 }
-                if (opzione.equals("1") || opzione.equals("2")) {
-                    out.println(opzione);
+                if (option.equals("1") || option.equals("2")) {
+                    out.println(option);
                     break;
                 } else {
-                    System.out.println("L'opzione: '" + opzione + "' è inesistente. Riprova.");
+                    System.out.println("L'opzione: '" + option + "' è inesistente. Riprova.");
                 }
             } catch (Exception e) {
                 System.err.println("Errore è: " + e.getMessage());
-                // Chiudi la connessione con il server
+                // close the connection with the server
                 try {
                     socket.close();
                 } catch (IOException ex) {
@@ -268,7 +268,7 @@ public class Client {
         }
     }
 
-    private static boolean setNumberArticle(int posizione, String codiceArticolo){
+    private static boolean setNumberArticle(int position, String codeArticle){
         Scanner input = new Scanner(System.in);
         while (true) {
             int numberOfArticle;
@@ -281,10 +281,10 @@ public class Client {
                 continue;
             }
             if (numberOfArticle > 0) {
-                if (numberOfArticle <= quantita.get(posizione)) {
-                    out.println("v");   //per far capire al server che è stato inserito un codice e num. art. corretto
+                if (numberOfArticle <= disponibility.get(position)) {
+                    out.println("v");   //to know at the server that are entered correct code and quantity article
                     out.println(el);
-                    out.println(codiceArticolo);
+                    out.println(codeArticle);
                     out.println(numberOfArticle);
                     //input.nextLine();
                     return false;

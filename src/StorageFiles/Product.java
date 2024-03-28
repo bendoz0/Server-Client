@@ -1,3 +1,5 @@
+package StorageFiles;
+
 import java.util.Objects;
 
 public class Product {
@@ -41,7 +43,7 @@ public class Product {
     }
     @Override
     public String toString() {
-        return "Classi.CartManagement.Product{" +
+        return "Classi.CartManagement.StorageFiles.Product{" +
                 "category='" + category + '\'' +
                 ", brand='" + brand + '\'' +
                 ", price=" + price +

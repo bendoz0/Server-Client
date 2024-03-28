@@ -1,3 +1,5 @@
+package ClientFiles;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,7 +16,7 @@ public class EmailValidator {
                     + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
 
     /**
-     * Costruisce un'istanza di Classi.UserManagement.EmailValidator.
+     * Costruisce un'istanza di Classi.UserManagement.ClientFiles.EmailValidator.
      * Il costruttore crea un oggetto pattern da confrontare con gli indirizzi e-mail di input.
      */
     public EmailValidator() {   //costruttore usato per creare un oggetto patter da comparare con la email da input

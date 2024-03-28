@@ -3,7 +3,7 @@ Maglietta/Tommy-Hilfiger/45/XYZ456/10
 Maglietta/Ralph-Louren/55/XYZ356/10
 Felpa/Supreme/199.99/ABC823/10
 Felpa/Tommy-Hilfiger/64.90/XJZ456/10
-Felpa/Ralph-Louren/75/XYZ357/10
+Felpa/Ralph-Louren/75/XYZ357/9
 Maglione/Supreme/99.99/AKC123/10
 Maglione/Tommy-Hilfiger/70/PYZ456/10
 Maglione/Ralph-Louren/219.90/XYZ056/10
@@ -12,7 +12,7 @@ Jeans/Charrat/70/OYZ456/10
 Jeans/Bershka/19/XYZ026/10
 Cargo/Levis/55/UKC123/10
 Cargo/Charrat/80/OYH456/10
-Cargo/Bershka/24.99/XYZ126/10
-Shorts/Levis/45/LKC123/10
+Cargo/Bershka/24.99/XYZ126/9
+Shorts/Levis/45/LKC123/6
 Shorts/Charrat/50/OGZ456/10
 Shorts/Bershka/14.99/XYZ066/10

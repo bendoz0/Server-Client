@@ -1,3 +1,5 @@
+package ServerFiles;
+import StorageFiles.Product;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class ClientHandler implements Runnable {
     }
     @Override
     public String toString() {
-        return "ClientHandler{" +
+        return "ServerFiles.ClientHandler{" +
                 "name='" + name + '\'' +
                 ", surname='" + surname + '\'' +
                 ", email='" + email + '\'' +
@@ -48,31 +50,31 @@ public class ClientHandler implements Runnable {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             boolean var;
             do {
-                var = UserRegister();
+                var = UserRegister();   //function to manage the access or register of users
             }while(!var);
-            String trovato;
+            String found;
             while(true) {
-                String message = in.readLine();
+                String message = in.readLine(); //reading the option menù
                 System.out.println("Messaggio dal client: " + message);
                 if (message.equals("1")) {
-                    shoppingMenu();
-                    trovato = in.readLine();
-                    if (trovato.equals("x")) {
+                    shoppingMenu(); //function to send the storage
+                    found = in.readLine();  //reading a variable of client
+                    if (found.equals("x")) {    //means that the client want to return to the menù
                     }else{
-                        String el = in.readLine();
-                        String code = in.readLine();
-                        int quantity = Integer.parseInt(in.readLine());
-                        findArticle(code, quantity, el);
-                        letturaRiscrittura(code, quantity);
+                        String el = in.readLine();      //reading at which email add the product
+                        String code = in.readLine();    //reading the code of the article
+                        int quantity = Integer.parseInt(in.readLine());     //reading number of this article
+                        findArticle(code, quantity, el);    //function to find the article from storage
+                        letturaRiscrittura(code, quantity); //update the storage reducing the quantity of the article selected
                     }
                 } else {
                     //carrello
                     String el = in.readLine();
-                    boolean value = printCart(el);
+                    boolean value = printCart(el);  //function that print the cart of the client
                     if(value){
-                        String opzioneCarrello = in.readLine();
+                        String opzioneCarrello = in.readLine(); //reading if the client want to buy or not the cart
                         if(opzioneCarrello.equals("buy")){
-                            buyArticle(el);
+                            buyArticle(el); //function to reset the cart
                         }
                     }
                 }
@@ -98,7 +100,6 @@ public class ClientHandler implements Runnable {
                 String emailVerify = in.readLine();
                 String passwordVerify = in.readLine();
                 try {
-                    //System.out.println(usersList.toString());
                     for (ClientHandler user : usersList) {
                         if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
                             out.println("Accesso");
@@ -149,7 +150,7 @@ public class ClientHandler implements Runnable {
     private void shoppingMenu(){
         try {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-            BufferedReader reader = new BufferedReader(new FileReader("src/Magazzino.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("src/StorageFiles/Magazzino.txt"));
             String[] words;
             String line;
             Product product;
@@ -182,28 +183,28 @@ public class ClientHandler implements Runnable {
     }
     private synchronized static void letturaRiscrittura(String itemCode, int numberOfArticle){
         try {
-            // Legge il file e memorizza le lines in una lista
+            // read the file and save the lines in a list
             List<String> lines = new ArrayList<>();
-            BufferedReader reader = new BufferedReader(new FileReader("src/Magazzino.txt"));
+            BufferedReader reader = new BufferedReader(new FileReader("src/StorageFiles/Magazzino.txt"));
             String line;
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
             }
             reader.close();
-            // Trova l'indice della line
+            // find the index of the line
             for (int i = 0; i < lines.size(); i++) {
                 if (lines.get(i).contains(itemCode)) {
-                    // Estrai il valore quantita dalla line
+                    // extract the value of quantity from line
                     String[] value = lines.get(i).split("/");
                     value[4] = String.valueOf(Integer.parseInt(value[4]) - numberOfArticle);
 
-                    // Aggiorna la line con la nuova quantita
+                    // update the line with the new quantity
                     lines.set(i, String.join("/", value));
                     break;
                 }
             }
-            // Riscrivi il file con la modifica
-            BufferedWriter writer = new BufferedWriter(new FileWriter("src/Magazzino.txt"));
+            // rewrote the file with they modify
+            BufferedWriter writer = new BufferedWriter(new FileWriter("src/StorageFiles/Magazzino.txt"));
             for (String changedLine : lines) {
                 writer.write(changedLine);
                 writer.newLine();
