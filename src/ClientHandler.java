@@ -3,6 +3,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ClientHandler implements Runnable {
     private static ArrayList<ClientHandler> usersList = new ArrayList<>();
@@ -15,7 +16,6 @@ public class ClientHandler implements Runnable {
     private String surname;
     private String email;
     private String password;
-    private static String emailDiAccesso;
 
     public ClientHandler(Socket socket) {
         try{
@@ -45,10 +45,9 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             UserRegister();
-            String trovato = "";
+            String trovato;
             while(true) {
                 String message = in.readLine();
                 System.out.println("Messaggio dal client: " + message);
@@ -57,13 +56,22 @@ public class ClientHandler implements Runnable {
                     trovato = in.readLine();
                     if (trovato.equals("x")) {
                     }else{
+                        String el = in.readLine();
                         String code = in.readLine();
                         int quantity = Integer.parseInt(in.readLine());
-                        findArticle(code, quantity);
+                        findArticle(code, quantity, el);
                         letturaRiscrittura(code, quantity);
                     }
                 } else {
                     //carrello
+                    String el = in.readLine();
+                    boolean value = printCart(el);
+                    if(value){
+                        String opzioneCarrello = in.readLine();
+                        if(opzioneCarrello.equals("buy")){
+                            buyArticle(el);
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
@@ -77,64 +85,71 @@ public class ClientHandler implements Runnable {
         }
     }
     //------------------------------------------------------------------------------------------------------------------
-    public void UserRegister() throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-        boolean correct = false;
-        String opz = in.readLine();
-        switch (opz){
-            case "1":
-                String emailVerify = in.readLine();
-                String passwordVerify = in.readLine();
-                try {
-                    //System.out.println(usersList.toString());
-                    for (ClientHandler user : usersList) {
-                        if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
-                            correct = true;
-                            emailDiAccesso = emailVerify;
-                            out.println("accesso");
-                            break;
+    private void UserRegister() {
+        try {
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+            boolean correct = false;
+            String opz = in.readLine();
+            switch (opz){
+                case "1":
+                    String emailVerify = in.readLine();
+                    String passwordVerify = in.readLine();
+                    try {
+                        //System.out.println(usersList.toString());
+                        for (ClientHandler user : usersList) {
+                            if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
+                                correct = true;
+                                out.println("accesso");
+                                break;
+                            }
                         }
+                        if (!correct){
+                            out.println("ERRORE. E-mail o Password sbagliati.");
+                        }
+                    }catch (IllegalArgumentException e){
+                        System.out.println(e.getMessage());
                     }
-                    if (!correct){
-                        out.println("ERRORE. E-mail o Password sbagliati.");
-                    }
-                }catch (IllegalArgumentException e){
-                    System.out.println(e.getMessage());
-                }
-                break;
-            case "2":
-                String name = in.readLine();
-                String surname = in.readLine();
-                String email = in.readLine();
-                String password = in.readLine();
-                emailDiAccesso = email;
-                ClientHandler newUser = new ClientHandler(name, surname, email, password);
-                usersList.add(newUser);
-                System.out.println(usersList);
-                fillMap(emailDiAccesso);
-                //out.println("Registrazione avvenuta con successo");
-                break;
+                    break;
+                case "2":
+                    String name = in.readLine();
+                    String surname = in.readLine();
+                    String email = in.readLine();
+                    String password = in.readLine();
+                    ClientHandler newUser = new ClientHandler(name, surname, email, password);
+                    usersList.add(newUser);
+                    fillMap(newUser.email);
+                    //out.println("Registrazione avvenuta con successo");
+                    break;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
-    public static void fillMap (String mail){
-        usersCart.putIfAbsent(mail, new ArrayList<Product>());
+    private synchronized static void fillMap (String mail){
+        usersCart.putIfAbsent(mail, new ArrayList<>());
     }
-    public static void findArticle(String itemCode, int numberOfArticle){
+    private void findArticle(String itemCode, int numberOfArticle, String el){
         for(Product p : data){
             if (p.getCode().equals(itemCode)){
-                ClientHandler.cartManagement(p, numberOfArticle);
+                cartManagement(p, numberOfArticle, el);
                 break;
             }
         }
     }
-    public static void cartManagement(Product p, int numberOfArticle){
+    private synchronized void cartManagement(Product p, int numberOfArticle, String el){
         p.setQuantity(numberOfArticle);
-        if (usersCart.containsKey(emailDiAccesso)) {
-            usersCart.get(emailDiAccesso).add(p);
+        if (usersCart.containsKey(el)) {
+            usersCart.get(el).add(p);
         }
     }
-    public void shoppingMenu() throws IOException {
+    private synchronized void buyArticle(String el){
+        if(usersCart.containsKey(el)){
+            usersCart.get(el).clear();
+        }
+    }
+    private void shoppingMenu(){
         try {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             BufferedReader reader = new BufferedReader(new FileReader("src/Magazzino.txt"));
@@ -168,7 +183,7 @@ public class ClientHandler implements Runnable {
         }
         return s;
     }
-    public static void letturaRiscrittura(String itemCode, int numberOfArticle){
+    private synchronized static void letturaRiscrittura(String itemCode, int numberOfArticle){
         try {
             // Legge il file e memorizza le lines in una lista
             List<String> lines = new ArrayList<>();
@@ -201,8 +216,37 @@ public class ClientHandler implements Runnable {
             e.printStackTrace();
         }
     }
+    private synchronized boolean printCart(String el){
+        PrintWriter out;
+        try {
+            out = new PrintWriter(clientSocket.getOutputStream(), true);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-    public void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
+        double sum = 0;
+        if (usersCart.get(el).isEmpty()) {
+            out.println("empty");
+            out.println("La lista del carrello è vuota.");
+            return false;
+        }else{
+            out.println("something");
+            for (Map.Entry <String, ArrayList<Product>> entry : usersCart.entrySet()){
+                if (entry.getKey().equals(el)) {
+                    out.println("\nCARRELLO:");
+                    for(Product elem : entry.getValue()){
+                        out.println(elem.getCategory()+" "+elem.getBrand()+" - codice articolo: "+elem.getCode()+" - quantità: "+elem.getQuantity()+" - Prezzo Totale dell'articolo: "+(elem.getPrice()*elem.getQuantity()+"€"));
+                        sum += elem.getPrice() * elem.getQuantity();
+                    }
+                }
+            }
+            String formattedValue = String.format("%.2f", sum);
+            out.println("Prezzo TOTALE: " + formattedValue + "€");
+            out.println("end");
+            return true;
+        }
+    }
+    private void closeEverything(Socket socket, BufferedReader bufferedReader, BufferedWriter bufferedWriter){
         try{
             if(bufferedWriter != null){
                 bufferedWriter.close();

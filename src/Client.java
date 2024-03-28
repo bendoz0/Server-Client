@@ -17,82 +17,85 @@ public class Client {
     private String password;
     private static String opz;
     private static String opzione;
+    private static String el;
     private static ArrayList<String> codici = new ArrayList<>();
     private static ArrayList<Integer> quantita = new ArrayList<>();
 
     // -----------------------------------------------------------------------------------------------------------------
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args){
         Scanner input = new Scanner(System.in);
         Client client = new Client();
         boolean trovato = false;
         int posizione = 0;
         client.connectToServer();
         client.createReaderWriter();
-        client.recognition();
-        if(!opz.equals("1")) {  //if it's different from one
-            client.sendMsg();
-        }
-        while(true){
-            System.out.print(""" 
-                                Menù abbigliamento, inserisci il numero della categoria che desideri:
-                                1-Shopping
-                                2-Carrello
-                                3-Exit
-                                Opzione Numero: 
-                                """);
-            client.writeMessage(input);
-            if(opzione.equals("1")) {
-                client.readingStorage();    //serve per leggere il magazzino
-                /*blocco per 1sec questa stampa perchè la stampa del magazzino è più lenta
-                - InterruptedException per gestire eccezioni durante Thread.sleep*/
-                Thread.sleep(10000);
-                System.out.println("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci un altro carattere\nRisposta: ");
-                String codiceArticolo = input.nextLine();
-                for (String codice : codici) {
-                    if (codice.equals(codiceArticolo)) {
-                        posizione = codici.indexOf(codiceArticolo);
-                        trovato = true;
-                        break;
-                    }
-                }
-                if (trovato) {
-                    while (true) {
-                        System.out.println("Quanti ne vuoi di questo articolo? ");
-                        int numberOfArticle;
-                        String numFormat = input.next();
-                        try{
-                            numberOfArticle = Integer.parseInt(numFormat);
-                        }catch(NumberFormatException e){
-                            System.out.println("ERRORE: Inserire un numero");
-                            continue;
-                        }
-                        if (numberOfArticle > 0) {
-                            if (numberOfArticle <= quantita.get(posizione)) {
-                                out.println("v");   //per far capire al server che è stato inserito un codice e num. art. corretto
-                                out.println(codiceArticolo);
-                                out.println(numberOfArticle);
-                                input.nextLine();
-                                trovato=false;
-                                break;
-                            } else {
-                                System.out.println("ERRORE: Numero articoli insufficenti");
-                            }
-                        } else {
-                            System.out.println("ERRORE: Inserire un numero maggiore di zero");
-                        }
-                    }
-                } else {
-                    out.println("x");
-                }
-            }else{
+        try {
+            client.recognition();
+            if(!opz.equals("1")) {  //if it's different from one
+                out.println(opz);
+                client.sendMsg();
             }
+            while(true){
+                System.out.print("""
+                                    \nMenù abbigliamento, inserisci il numero della categoria che desideri:
+                                    1-Shopping
+                                    2-Carrello
+                                    3-Exit
+                                    Opzione Numero:
+                                    """);
+                client.writeMessage(input);
+                if(opzione.equals("1")) {
+                    client.readingStorage();    //serve per leggere il magazzino
+                    /*blocco per 10sec questa stampa perchè la stampa del magazzino è più lenta
+                    - InterruptedException per gestire eccezioni durante Thread.sleep
+                    - le eccezioni aggiunte al main vanno gestite internamente e non lì*/
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    System.out.print("Se desideri aggiungere al carrello qualche articolo inserisci il CODICE dell'articolo.\nAltrimenti inserisci un altro carattere\nRisposta: ");
+                    String codiceArticolo = input.nextLine();
+                    for (String codice : codici) {
+                        if (codice.equals(codiceArticolo)) {
+                            posizione = codici.indexOf(codiceArticolo);
+                            trovato = true;
+                            break;
+                        }
+                    }
+                    if (trovato) {
+                        trovato = setNumberArticle(posizione, codiceArticolo);
+                    } else {
+                        out.println("x");
+                    }
+                }else{
+                    out.println(el);
+                    if(in.readLine().equals("empty")){
+                        String stato = in.readLine();
+                        System.out.println(stato+"\n");
+                    }else{
+                        while(true){
+                            String text = in.readLine();
+                            if(text.equals("end"))break;
+                            System.out.println(text);
+                        }
+                        System.out.print("\nOpzioni:\t1 - Compra\t2 - GoBack\nOpzione Numero: ");
+                        String option = input.nextLine();
+                        if(option.equals("1")){
+                            out.println("buy");
+                            System.out.println("Grazie mille per aver acquistato su ZalandoCOPY. \nLa consegna del tuo ordine è prevista tra 5 giorni lavorativi a partire da oggi.");
+                        }else{
+                            out.println("out");
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        /*Gestire da client l'inserimento del codice dell'articolo e la quantità e poi inviarlo al server
-        - Il server poi deve vedere se il codice inserito e la quantità richiesta sono disponibili.
-        - Se si li aggiunge al carrello, in caso negativo ritorna al client un errore e viene richiesto l'inserimento. */
     }
     // -----------------------------------------------------------------------------------------------------------------
-    public void connectToServer() {
+    private void connectToServer() {
         try {
             socket = new Socket("localhost", 4444);
         } catch (IOException e) {
@@ -100,7 +103,7 @@ public class Client {
             e.printStackTrace();
         }
     }
-    public void createReaderWriter() {
+    private void createReaderWriter() {
         try {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -109,40 +112,45 @@ public class Client {
         }
     }
 
-    public void recognition() throws IOException {
-        in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        Scanner input = new Scanner(System.in);
-        while (true) {
-            System.out.println("Selezionare l'opzione desiderata:\n1 - Accedi\n2 - Registrati");
-            String opz = input.nextLine();
-            Client.opz = opz;
-            if (opz.equals("1")) {
-                System.out.print("Inserisci email: ");
-                String emailVerify = input.nextLine();
-                System.out.print("Inserisci password: ");
-                String passwordVerify = input.nextLine();
-                out.println(opz);
-                out.println(emailVerify);
-                out.println(passwordVerify);
-                String message = "ERRORE. E-mail o Password sbagliati.";
-                String stato = in.readLine();
-                if (!stato.equals(message)) {
-                    System.out.println(stato);
+    private void recognition(){
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            Scanner input = new Scanner(System.in);
+            while (true) {
+                System.out.println("\nSelezionare l'opzione desiderata:\n1 - Accedi\n2 - Registrati");
+                String opz = input.nextLine();
+                Client.opz = opz;
+                if (opz.equals("1")) {
+                    System.out.print("Inserisci email: ");
+                    String emailVerify = input.nextLine();
+                    System.out.print("Inserisci password: ");
+                    String passwordVerify = input.nextLine();
+                    out.println(opz);
+                    out.println(emailVerify);
+                    out.println(passwordVerify);
+                    String message = "ERRORE. E-mail o Password sbagliati.";
+                    String stato = in.readLine();
+                    if (!stato.equals(message)) {
+                        System.out.println(stato);
+                        el = emailVerify;
+                        break;
+                    }
+                    System.out.println(message);
+                } else if (opz.equals("2")) {
+                    setName();
+                    setSurname();
+                    setEmail();
+                    setPassword();
                     break;
+                } else {
+                    System.out.println("Opzione inesistente");
                 }
-                System.out.println(message);
-            } else if (opz.equals("2")) {
-                setName();
-                setSurname();
-                setEmail();
-                setPassword();
-                break;
-            } else {
-                System.out.println("Opzione inesistente");
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
-    public void setName() {
+    private void setName() {
         Scanner input = new Scanner(System.in);
         boolean allOk = false;
         while (!allOk) {
@@ -156,7 +164,7 @@ public class Client {
             }
         }
     }
-    public void setSurname() {
+    private void setSurname() {
         Scanner input = new Scanner(System.in);
         boolean allOk = false;
         while (!allOk) {
@@ -170,7 +178,7 @@ public class Client {
             }
         }
     }
-    public void setEmail() {
+    private void setEmail() {
         Scanner input = new Scanner(System.in);
         boolean allOk = false;
         while (!allOk) {
@@ -180,12 +188,13 @@ public class Client {
             if (validator.validate(e)) {
                 allOk = true;
                 this.email = e;
+                el = e;
             } else {
                 System.out.println("email errata. Si prega di rinserire il dato.");
             }
         }
     }
-    public void setPassword() {
+    private void setPassword() {
         Scanner input = new Scanner(System.in);
         boolean allOk = false;
         while (!allOk) {
@@ -200,8 +209,7 @@ public class Client {
         }
     }
 
-    public void sendMsg() {
-        out.println(opz);
+    private void sendMsg() {
         out.println(name);
         out.println(surname);
         out.println(email);
@@ -235,7 +243,7 @@ public class Client {
             }
         }).start();
     }
-    private void writeMessage(Scanner input) throws IOException {
+    private void writeMessage(Scanner input){
         // Invia un messaggio al server
         while (true) {
             try {
@@ -252,7 +260,40 @@ public class Client {
             } catch (Exception e) {
                 System.err.println("Errore è: " + e.getMessage());
                 // Chiudi la connessione con il server
-                socket.close();
+                try {
+                    socket.close();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+    }
+
+    private static boolean setNumberArticle(int posizione, String codiceArticolo){
+        Scanner input = new Scanner(System.in);
+        while (true) {
+            int numberOfArticle;
+            System.out.println("Quanti ne vuoi di questo articolo? ");
+            String numFormat = input.next();
+            try{
+                numberOfArticle = Integer.parseInt(numFormat);
+            }catch(NumberFormatException e){
+                System.out.println("ERRORE: Inserire un numero");
+                continue;
+            }
+            if (numberOfArticle > 0) {
+                if (numberOfArticle <= quantita.get(posizione)) {
+                    out.println("v");   //per far capire al server che è stato inserito un codice e num. art. corretto
+                    out.println(el);
+                    out.println(codiceArticolo);
+                    out.println(numberOfArticle);
+                    //input.nextLine();
+                    return false;
+                } else {
+                    System.out.println("ERRORE: Numero articoli insufficenti");
+                }
+            } else {
+                System.out.println("ERRORE: Inserire un numero maggiore di zero");
             }
         }
     }
