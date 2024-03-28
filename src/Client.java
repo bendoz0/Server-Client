@@ -128,14 +128,13 @@ public class Client {
                     out.println(opz);
                     out.println(emailVerify);
                     out.println(passwordVerify);
-                    String message = "ERRORE. E-mail o Password sbagliati.";
                     String stato = in.readLine();
-                    if (!stato.equals(message)) {
+                    if (stato.equals("Accesso")) {
                         System.out.println(stato);
                         el = emailVerify;
                         break;
                     }
-                    System.out.println(message);
+                    System.out.println(stato);
                 } else if (opz.equals("2")) {
                     setName();
                     setSurname();
@@ -204,7 +203,7 @@ public class Client {
                 allOk = true;
                 this.password = p;
             } else {
-                System.out.println("Password inserita troppo corta (minimo 8 caratteri). Si prega di rinserire il dato.");
+                System.out.println("Password debole (minimo 8 caratteri). Si prega di rinserire il dato.");
             }
         }
     }

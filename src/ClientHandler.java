@@ -46,7 +46,10 @@ public class ClientHandler implements Runnable {
     public void run() {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            UserRegister();
+            boolean var;
+            do {
+                var = UserRegister();
+            }while(!var);
             String trovato;
             while(true) {
                 String message = in.readLine();
@@ -85,47 +88,41 @@ public class ClientHandler implements Runnable {
         }
     }
     //------------------------------------------------------------------------------------------------------------------
-    private void UserRegister() {
+    private boolean UserRegister() {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
-            boolean correct = false;
             String opz = in.readLine();
-            switch (opz){
-                case "1":
-                    String emailVerify = in.readLine();
-                    String passwordVerify = in.readLine();
-                    try {
-                        //System.out.println(usersList.toString());
-                        for (ClientHandler user : usersList) {
-                            if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
-                                correct = true;
-                                out.println("accesso");
-                                break;
-                            }
+            if(opz.equals("1")) {
+                String emailVerify = in.readLine();
+                String passwordVerify = in.readLine();
+                try {
+                    //System.out.println(usersList.toString());
+                    for (ClientHandler user : usersList) {
+                        if (user.email.equals(emailVerify) && user.password.equals(passwordVerify)) {
+                            out.println("Accesso");
+                            return true;
                         }
-                        if (!correct){
-                            out.println("ERRORE. E-mail o Password sbagliati.");
-                        }
-                    }catch (IllegalArgumentException e){
-                        System.out.println(e.getMessage());
                     }
-                    break;
-                case "2":
-                    String name = in.readLine();
-                    String surname = in.readLine();
-                    String email = in.readLine();
-                    String password = in.readLine();
-                    ClientHandler newUser = new ClientHandler(name, surname, email, password);
-                    usersList.add(newUser);
-                    fillMap(newUser.email);
-                    //out.println("Registrazione avvenuta con successo");
-                    break;
+                    out.println("ERRORE. E-mail o Password sbagliati.");
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e.getMessage());
+                }
+            }else {
+                String name = in.readLine();
+                String surname = in.readLine();
+                String email = in.readLine();
+                String password = in.readLine();
+                ClientHandler newUser = new ClientHandler(name, surname, email, password);
+                usersList.add(newUser);
+                fillMap(newUser.email);
+                return true;
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return false;
     }
     private synchronized static void fillMap (String mail){
         usersCart.putIfAbsent(mail, new ArrayList<>());
