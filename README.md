@@ -33,6 +33,7 @@ The client can select and add the article to the cart and finally buy the all co
 <h4>TEXT FILE STRUCTURE:</h4>
 
 <h4>OUTPUT ARTICLES CLIENT:</h4>
+![image](https://github.com/bendoz0/Server-Client/assets/147492032/1ef5356a-6f9a-4f53-a081-bbb6bd29fb0f)
 
 
 <h1></h1>
