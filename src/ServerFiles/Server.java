@@ -14,12 +14,12 @@ public class Server {
     public void start() {
         try {
             serverSocket = new ServerSocket(4444);
-            System.out.println("ServerFiles.Server avviato. In attesa di client...");
+            System.out.println("Server avviato. In attesa di client...");
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("ClientFiles.Client connesso: " + clientSocket.getInetAddress());
-                // Avvia un thread separato per gestire la connessione con il client
+                //Starts a separate thread to handle the connection with the client
                 ClientHandler clientHandler = new ClientHandler(clientSocket);
                 Thread thread = new Thread(clientHandler);
                 thread.start();

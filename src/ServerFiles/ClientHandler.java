@@ -51,6 +51,10 @@ public class ClientHandler implements Runnable {
             boolean var;
             do {
                 var = UserRegister();   //function to manage the access or register of users
+                //control if the clientSocket is already connected
+                if(clientSocket.isClosed()){
+                    var= true;
+                }
             }while(!var);
             String found;
             while(true) {
@@ -68,7 +72,7 @@ public class ClientHandler implements Runnable {
                         letturaRiscrittura(code, quantity); //update the storage reducing the quantity of the article selected
                     }
                 } else {
-                    //carrello
+                    //cart
                     String el = in.readLine();
                     boolean value = printCart(el);  //function that print the cart of the client
                     if(value){
@@ -80,9 +84,9 @@ public class ClientHandler implements Runnable {
                 }
             }
         } catch (IOException e) {
-            // Chiudi la connessione
-            System.out.println("Connessione chiusa con il client: " + clientSocket.getInetAddress());
             try {
+                //Connection closed
+                System.out.println("Connessione chiusa con il client: " + clientSocket.getInetAddress());
                 clientSocket.close();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -121,7 +125,12 @@ public class ClientHandler implements Runnable {
                 return true;
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            try {
+                //Connection closed
+                clientSocket.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return false;
     }
