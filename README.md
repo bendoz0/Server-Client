@@ -6,6 +6,9 @@
 The server read data of each articles form a text file (used like DB). 
 The client can select and add the article to the cart and finally buy the all contenents of the cart.</h5>
 
+<h4>INSTALLATION:</h4>
+  <li>Java Version 21.0.1</li>
+
 <h4>FUNCTIONALITY:</h4>
 <ul>
   CLient:
