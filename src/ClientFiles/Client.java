@@ -30,7 +30,6 @@ public class Client {
         System.out.print("Inserisci IP del server: ");
         ip = input.nextLine();
         client.connectToServer();   //create a connection with the server
-        //client.createReaderWriter();
         if(connessione) {
             client.recognition();   //function of start phases: access or registration
             if (optionLogIn.equals("2")) {
