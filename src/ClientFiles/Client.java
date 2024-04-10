@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Client {
+    private static String ip;
     private static Socket socket;
     private static PrintWriter out;
     private static BufferedReader in;
@@ -20,46 +21,54 @@ public class Client {
     private static String el;
     private static ArrayList<String> codes = new ArrayList<>();
     private static ArrayList<Integer> disponibility = new ArrayList<>();
+    private static boolean connessione = false;
 
     // -----------------------------------------------------------------------------------------------------------------
     public static void main(String[] args){
         Scanner input = new Scanner(System.in);
         Client client = new Client();
-
+        System.out.print("Inserisci IP del server: ");
+        ip = input.nextLine();
         client.connectToServer();   //create a connection with the server
-        client.createReaderWriter();    //creating the variable to read and write
-        client.recognition();   //function of start phases: access or registration
-        if(optionLogIn.equals("2")) {
-            out.println(optionLogIn);   //send the option and personal data to register the user
-            client.sendMsg();
-        }
-        while(true){
-            System.out.print("""
-                                \nMenù abbigliamento, inserisci il numero della categoria che desideri:
-                                1-Shopping
-                                2-Carrello
-                                3-Exit
-                                Opzione Numero:
-                                """);
-            client.writeMessage(input);
-            if(optionMenu.equals("1")) {
-                client.readingStorage();    //used to read the storage
-                //block the print for ten seconds, because the print of the article are more slowly
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+        //client.createReaderWriter();
+        if(connessione) {
+            client.recognition();   //function of start phases: access or registration
+            if (optionLogIn.equals("2")) {
+                out.println(optionLogIn);   //send the option and personal data to register the user
+                client.sendMsg();
+            }
+            while (true) {
+                System.out.print("""
+                        \nMenù abbigliamento, inserisci il numero della categoria che desideri:
+                        1-Shopping
+                        2-Carrello
+                        3-Exit
+                        Opzione Numero:
+                        """);
+                client.writeMessage(input);
+                if (optionMenu.equals("1")) {
+                    client.readingStorage();    //used to read the storage
+                    //block the print for ten seconds, because the print of the article are more slowly
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    readingInputArticle();
+                } else {
+                    cartManaging();
                 }
-                readingInputArticle();
-            }else{
-                cartManaging();
             }
         }
     }
     // -----------------------------------------------------------------------------------------------------------------
     private void connectToServer() {
         try {
-            socket = new Socket("localhost", 4444);
+            socket = new Socket(ip, 4444);
+            connessione = true;
+            if(connessione){
+            createReaderWriter();   //creating the variable to read and write
+            }
         } catch (IOException e) {
             System.err.println("SERVER OFFLINE");
         }
@@ -68,14 +77,13 @@ public class Client {
         try {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        } catch (IOException e) {
-            System.err.println("PROBLEM OF CONNECTION");
+        } catch (Exception e) {
+            System.out.println("PROBLEM OF CONNECTION");
         }
     }
 
     private void recognition(){
         try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             Scanner input = new Scanner(System.in);
             while (true) {
                 System.out.println("\nSelezionare l'opzione desiderata:\n1 - Accedi\n2 - Registrati");
@@ -107,8 +115,7 @@ public class Client {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            System.err.println("SERVER OFFLINE");        }
     }
     private void setName() {
         Scanner input = new Scanner(System.in);
