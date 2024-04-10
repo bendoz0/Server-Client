@@ -6,6 +6,11 @@
 The server read data of each articles form a text file (used like DB). 
 The client can select and add the article to the cart and finally buy the all contenents of the cart.</h5>
 
+<h4>INSTALLATION:</h4>
+  <li>Java Version 21.0.1</li>
+  <li>Fare clone del progetto su Intellij.</li>
+  <li>Avviare per primo il server e poi i client.</li>
+
 <h4>FUNCTIONALITY:</h4>
 <ul>
   CLient:
@@ -31,11 +36,15 @@ The client can select and add the article to the cart and finally buy the all co
 </ul>
 
 <h4>TEXT FILE STRUCTURE:</h4>
+<kbd>
 <img src="https://github.com/bendoz0/Server-Client/assets/147492032/7be4b5bf-a6e4-46ba-a8ff-6a2b2664dc7d">
+</kbd>
 
 <h4>OUTPUT ARTICLES CLIENT:</h4>
+<h5>Structured like this: Type of article - Brand - Price - Article code - Quantity</h5>
+<kbd>
 <img src="https://github.com/bendoz0/Server-Client/assets/147492032/b3d129b2-3126-4603-9a5d-01916ebeb529">
-
+</kbd>
 
 <h1></h1>
 <h3 align="left">Connect with me:</h3>
