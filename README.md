@@ -8,7 +8,7 @@ The client can select and add the article to the cart and finally buy the all co
 
 <h4>INSTALLATION:</h4>
   <li>Java Version 21.0.1</li>
-  <li>Fare pull del progetto su Intellij.</li>
+  <li>Fare clone del progetto su Intellij.</li>
   <li>Avviare per primo il server e poi i client.</li>
 
 <h4>FUNCTIONALITY:</h4>
