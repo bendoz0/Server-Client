@@ -20,6 +20,11 @@ The client can select and add the article to the cart and finally buy the all co
     <li>java server</li>
     <li>java client</li>
   </ol>
+  <li>To execute the jar:</li>
+  <ol>
+    <li>java -jar .\server.jar </li>
+    <li>java -jar .\client.jar </li>
+  </ol>
   
 <h4>FUNCTIONALITY:</h4>
 <ul>
