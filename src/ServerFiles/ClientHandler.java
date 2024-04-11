@@ -112,7 +112,7 @@ public class ClientHandler implements Runnable {
                     }
                     out.println("ERRORE. E-mail o Password sbagliati.");
                 } catch (IllegalArgumentException e) {
-                    System.out.println(e.getMessage());
+                    System.out.println("Connessione chiusa");
                 }
             }else {
                 String name = in.readLine();
@@ -129,7 +129,7 @@ public class ClientHandler implements Runnable {
                 //Connection closed
                 clientSocket.close();
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                System.out.println("Client sconnesso.");
             }
         }
         return false;
