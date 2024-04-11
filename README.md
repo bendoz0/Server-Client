@@ -8,18 +8,33 @@ The client can select and add the article to the cart and finally buy the all co
 
 <h4>INSTALLATION:</h4>
   <li>Java Version 21.0.1</li>
-  <li>Fare clone del progetto su Intellij.</li>
-  <li>Avviare per primo il server e poi i client.</li>
-
+  <li>Clone the project on Intellij</li>
+  <li>Select the correct directory, where the project clone was made.</li>
+  <li>Compile the files to execute:</li>
+  <ol>
+    <li>javac server.java</li>
+    <li>javac client.java</li>
+  </ol>
+  <li>Execute the correct files:</li>
+  <ol>
+    <li>java server</li>
+    <li>java client</li>
+  </ol>
+  
 <h4>FUNCTIONALITY:</h4>
 <ul>
-  CLient:
-  <li>Connect to the server.</li>
+  Client:
+  <li>Connect to the server by entering the IP of the server.</li>
   <li>The user need to create an account insert name, surname, email and password.</li>
+  <li>The client can do LogIn if you have already created an account.</li>
   <li>Visualizaion the Menù option.</li>
+  <ol>
+    <li>Select Shopping.</li>
+    <li>Select cart.</li>
+    <li>Select Exit.</li>
+  </ol>
   <li>Possibility to add articles at the cart.</li>
   <li>Buy all contenets of the cart.</li>
-  <li>Exit.</li>
   <h4></h4>
   Server:
   <li>Register each client with it's data.</li>
